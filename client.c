@@ -13,21 +13,32 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "libft/libft.h"
+#include "utils.h"
 
-static void	action(int sig)
+static volatile sig_atomic_t   g_ack = 0;
+
+static void     action(int sig)
 {
-	static int	received = 0;
+        static int      received = 0;
+        static int      bits = 0;
 
-	if (sig == SIGUSR1)
-		++received;
-	else
-	{
-		ft_putnbr_fd(received, 1);
-		ft_putchar_fd('\n', 1);
-		exit(0);
-	}
+        if (sig == SIGUSR1)
+        {
+                if (++bits == 8)
+                {
+                        ++received;
+                        bits = 0;
+                }
+                g_ack = 1;
+        }
+        else
+        {
+                ft_putnbr_fd(received, 1);
+                ft_putchar_fd('\n', 1);
+                exit(0);
+        }
 }
+
 
 static void	mt_kill(int pid, char *str)
 {
@@ -40,19 +51,23 @@ static void	mt_kill(int pid, char *str)
 		c = *str++;
 		while (i--)
 		{
-			if (c >> i & 1)
-				kill(pid, SIGUSR2);
-			else
-				kill(pid, SIGUSR1);
-			usleep(100);
-		}
-	}
-	i = 8;
-	while (i--)
-	{
-		kill(pid, SIGUSR1);
-		usleep(100);
-	}
+                        if (c >> i & 1)
+                                kill(pid, SIGUSR2);
+                        else
+                                kill(pid, SIGUSR1);
+                        while (!g_ack)
+                                pause();
+                        g_ack = 0;
+                }
+        }
+        i = 8;
+        while (i--)
+        {
+                kill(pid, SIGUSR1);
+                while (!g_ack)
+                        pause();
+                g_ack = 0;
+        }
 }
 
 int	main(int argc, char **argv)
