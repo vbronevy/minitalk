@@ -37,7 +37,7 @@ static void	ack_handler(int sig)
 	client_state(READY);
 }
 
-static void	send_char(char c, pid_t kingkai)
+static void	send_char(char c, pid_t server)
 {
 	int	bit;
 
@@ -45,9 +45,9 @@ static void	send_char(char c, pid_t kingkai)
 	while (bit < CHAR_BIT)
 	{
 		if (c & (0x80 >> bit))
-			kill_ft(kingkai, SIGUSR1);
+			kill_ft(server, SIGUSR1);
 		else
-			kill_ft(kingkai, SIGUSR2);
+			kill_ft(server, SIGUSR2);
 		bit++;
 		while (client_state(-1) == BUSY)
 			usleep(42);
@@ -57,22 +57,22 @@ static void	send_char(char c, pid_t kingkai)
 
 int	main(int ac, char **av)
 {
-	pid_t	kingkai;
+	pid_t	server;
 	char	*message;
 	int		i;
 
 	if (ac != 3)
 	{
-		fputs("Usage: ./client <kingkai> \"message\"\n", stderr);
+		fputs("Usage: ./client <server PID> \"message\"\n", stderr);
 		return (EXIT_FAILURE);
 	}
-	kingkai = atoi(av[1]);
+	server = atoi(av[1]);
 	message = av[2];
 	signal_ft(SIGUSR1, ack_handler, false);
 	signal_ft(SIGUSR2, end_handler, false);
 	i = 0;
 	while (message[i])
-		send_char(message[i++], kingkai);
-	send_char('\0', kingkai);
+		send_char(message[i++], server);
+	send_char('\0', server);
 	return (EXIT_SUCCESS);
 }

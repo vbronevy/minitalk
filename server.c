@@ -16,12 +16,12 @@ static void	decode_signal_ft(int sig, pid_t sender_pid);
 
 static void	handler(int sig, siginfo_t *info, void *more_info)
 {
-	static pid_t	goku = 0;
+	static pid_t	client = 0;
 
 	(void)more_info;
 	if (info->si_pid)
-		goku = info->si_pid;
-	decode_signal_ft(sig, goku);
+		client = info->si_pid;
+	decode_signal_ft(sig, client);
 }
 
 static void	decode_signal_ft(int sig, pid_t sender_pid)
